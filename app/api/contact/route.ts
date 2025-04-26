@@ -2,94 +2,92 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
 
-// Change this to your exact front-end origin(s) in production:
-const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://your-production-domain.com']
-
-// Basic CORS headers:
-const getCorsHeaders = (origin: string | null) => ({
-  'Access-Control-Allow-Origin':
-    origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+// Always allow every origin (for dev / cross-domain). 
+// In production you can lock this down to your real front-end domain.
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
-})
+}
 
+// 1) Handle preflight
 export async function OPTIONS(req: NextRequest) {
-  // Preflight request handler
-  const origin = req.headers.get('origin')
-  return NextResponse.json(null, {
+  return new NextResponse(null, {
     status: 204,
-    headers: getCorsHeaders(origin),
+    headers: CORS_HEADERS,
   })
 }
 
+// 2) POST handler
 export async function POST(req: NextRequest) {
-  const origin = req.headers.get('origin')
-  const headers = getCorsHeaders(origin)
-
   try {
     const body = await req.json()
 
+    // Basic validation
     if (
-      !body ||
       typeof body.firstName !== 'string' ||
-      typeof body.email !== 'string'
+      typeof body.email     !== 'string'
     ) {
       return NextResponse.json(
         { success: false, error: 'firstName and email are required.' },
-        { status: 400, headers }
+        { status: 400, headers: CORS_HEADERS }
       )
     }
 
     const client = await clientPromise
-    const db = client.db(process.env.MONGODB_DB_NAME)
-    const coll = db.collection('contacts')
+    const coll = client
+      .db(process.env.MONGODB_DB_NAME)
+      .collection('contacts')
 
     const doc = {
       firstName: body.firstName.trim(),
-      lastName: (body.lastName || '').trim(),
-      email: body.email.trim(),
-      phone: (body.phone || '').trim(),
-      country: body.country || '',
-      message: (body.message || '').trim(),
+      lastName:  (body.lastName  || '').trim(),
+      email:     body.email.trim(),
+      phone:     (body.phone     || '').trim(),
+      country:   body.country    || '',
+      message:   (body.message   || '').trim(),
       createdAt: new Date(),
     }
 
     const result = await coll.insertOne(doc)
+
     return NextResponse.json(
       { success: true, id: result.insertedId.toString() },
-      { status: 201, headers }
+      { status: 201, headers: CORS_HEADERS }
     )
   } catch (err) {
     console.error('🔥 POST /api/contact error:', err)
     return NextResponse.json(
       { success: false, error: 'Internal Server Error' },
-      { status: 500, headers }
+      { status: 500, headers: CORS_HEADERS }
     )
   }
 }
 
+// 3) GET handler
 export async function GET(req: NextRequest) {
-  const origin = req.headers.get('origin')
-  const headers = getCorsHeaders(origin)
-
   try {
     const client = await clientPromise
-    const db = client.db(process.env.MONGODB_DB_NAME)
-    const coll = db.collection('contacts')
+    const coll = client
+      .db(process.env.MONGODB_DB_NAME)
+      .collection('contacts')
 
     const contacts = await coll.find().sort({ createdAt: -1 }).toArray()
     const sanitized = contacts.map((c) => ({
       ...c,
-      _id: c._id.toString(),
-      createdAt: c.createdAt.toISOString(),
+      _id:        c._id.toString(),
+      createdAt:  c.createdAt.toISOString(),
     }))
 
-    return NextResponse.json({ success: true, contacts: sanitized }, { headers })
+    return NextResponse.json(
+      { success: true, contacts: sanitized },
+      { headers: CORS_HEADERS }
+    )
   } catch (err) {
     console.error('🔥 GET /api/contact error:', err)
     return NextResponse.json(
       { success: false, error: 'Internal Server Error' },
-      { status: 500, headers }
+      { status: 500, headers: CORS_HEADERS }
     )
   }
 }
