@@ -4,71 +4,52 @@
 import { useEffect, useState } from 'react'
 
 type Contact = {
-  _id: string
+  _id:       string
   firstName: string
-  lastName: string
-  email: string
-  phone: string
-  country: string
-  message: string
+  lastName:  string
+  email:     string
+  phone:     string
+  country:   string
+  message:   string
   createdAt: string
 }
 
-export default function Home() {
+export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchContacts() {
       try {
         const res = await fetch('/api/contact')
-        if (!res.ok) {
-          throw new Error(`Status ${res.status}`)
-        }
-
+        if (!res.ok) throw new Error(`Status ${res.status}`)
         const data: {
           success: boolean
           contacts?: Contact[]
           error?: string
         } = await res.json()
-
-        if (!data.success) {
-          throw new Error(data.error ?? 'Unknown error')
-        }
-
+        if (!data.success) throw new Error(data.error ?? 'Unknown error')
         setContacts(data.contacts ?? [])
       } catch (err: unknown) {
-        // err is unknown, so we narrow it before using .message
-        if (err instanceof Error) {
-          setError(err.message)
-        } else {
-          setError(String(err))
-        }
+        setError(err instanceof Error ? err.message : String(err))
       } finally {
         setLoading(false)
       }
     }
-
     fetchContacts()
   }, [])
 
   if (loading) {
     return <p className="p-10">Loading contacts…</p>
   }
-
   if (error) {
-    return (
-      <p className="p-10 text-red-600">
-        Error loading contacts: {error}
-      </p>
-    )
+    return <p className="p-10 text-red-600">Error loading contacts: {error}</p>
   }
 
   return (
     <div className="p-10 font-open">
       <h1 className="text-2xl font-bold mb-8">All Contacts</h1>
-
       <div className="space-y-6">
         {contacts.map((c) => (
           <div key={c._id} className="border p-4 rounded-lg">
