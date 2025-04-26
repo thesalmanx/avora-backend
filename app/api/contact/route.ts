@@ -2,28 +2,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
 
-// Always allow every origin (for dev / cross-domain). 
-// In production you can lock this down to your real front-end domain.
+// Wildcard CORS for dev; lock it down in prod if you like
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
-// 1) Handle preflight
-export async function OPTIONS(req: NextRequest) {
+// Preflight (no need for the request object here)
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: CORS_HEADERS,
   })
 }
 
-// 2) POST handler
+// POST needs the req to parse the body
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    // Basic validation
     if (
       typeof body.firstName !== 'string' ||
       typeof body.email     !== 'string'
@@ -64,8 +62,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 3) GET handler
-export async function GET(req: NextRequest) {
+// GET doesn’t need the request object either
+export async function GET() {
   try {
     const client = await clientPromise
     const coll = client
@@ -75,8 +73,8 @@ export async function GET(req: NextRequest) {
     const contacts = await coll.find().sort({ createdAt: -1 }).toArray()
     const sanitized = contacts.map((c) => ({
       ...c,
-      _id:        c._id.toString(),
-      createdAt:  c.createdAt.toISOString(),
+      _id:       c._id.toString(),
+      createdAt: c.createdAt.toISOString(),
     }))
 
     return NextResponse.json(
