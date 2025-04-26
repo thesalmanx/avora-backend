@@ -23,25 +23,47 @@ export default function Home() {
     async function fetchContacts() {
       try {
         const res = await fetch('/api/contact')
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        const data = await res.json()
-        if (!data.success) throw new Error(data.error || 'Unknown error')
-        setContacts(data.contacts)
-      } catch (err: any) {
-        setError(err.message)
+        if (!res.ok) {
+          throw new Error(`Status ${res.status}`)
+        }
+
+        const data: {
+          success: boolean
+          contacts?: Contact[]
+          error?: string
+        } = await res.json()
+
+        if (!data.success) {
+          throw new Error(data.error ?? 'Unknown error')
+        }
+
+        setContacts(data.contacts ?? [])
+      } catch (err: unknown) {
+        // err is unknown, so we narrow it before using .message
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError(String(err))
+        }
       } finally {
         setLoading(false)
       }
     }
+
     fetchContacts()
   }, [])
 
-  if (loading) return <p className="p-10">Loading contacts…</p>
-  if (error) return (
-    <p className="p-10 text-red-600">
-      Error loading contacts: {error}
-    </p>
-  )
+  if (loading) {
+    return <p className="p-10">Loading contacts…</p>
+  }
+
+  if (error) {
+    return (
+      <p className="p-10 text-red-600">
+        Error loading contacts: {error}
+      </p>
+    )
+  }
 
   return (
     <div className="p-10 font-open">
