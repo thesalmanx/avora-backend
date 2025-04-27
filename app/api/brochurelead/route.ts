@@ -8,7 +8,7 @@ const CORS_HEADERS = {
 };
 
 export async function OPTIONS() {
-  return new NextResponse(null, {
+  return new Response(null, {
     status: 204,
     headers: CORS_HEADERS,
   });
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
       name: body.name.trim(),
       email: body.email.trim(),
       phone: body.phone.trim(),
-      userType: body.userType || '',
-      property: body.property || '',
+      userType: typeof body.userType === 'string' ? body.userType.trim() : '',
+      property: typeof body.property === 'string' ? body.property.trim() : '',
       createdAt: new Date(),
     };
 
