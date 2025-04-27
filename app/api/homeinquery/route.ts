@@ -28,7 +28,6 @@ export async function POST(request: Request) {
   try {
     const { name, email, phone, country } = await request.json();
 
-    // Validation
     if (!name || !email || !phone || !country) {
       return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 });
     }
@@ -45,9 +44,10 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     });
 
-    return NextResponse.json({ success: true, _id: result.insertedId.toString() });
+    return NextResponse.json({ success: true, _id: result.insertedId.toString() }); // <-- no { status: 201 }
   } catch (error) {
     console.error('POST /api/homeinquery error:', error);
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
