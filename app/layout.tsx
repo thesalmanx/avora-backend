@@ -30,6 +30,14 @@ export default function RootLayout({
             >
               Contact Us Entries
             </Link>
+
+            <Link
+              href="/brochureleads"
+              className="text-gray-700 hover:text-gray-900"
+            >
+              Brochure Leads
+            </Link>
+
           </nav>
         </header>
         <main>{children}</main>
