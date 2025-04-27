@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     });
 
-    return NextResponse.json({ success: true, _id: result.insertedId.toString() }, { status: 201 });
+    return NextResponse.json({ success: true, _id: result.insertedId.toString() });
   } catch (error) {
     console.error('POST /api/homeinquery error:', error);
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
