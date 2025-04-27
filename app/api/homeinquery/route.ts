@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
+// Enable CORS manually
+function setCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*'); // or restrict to your frontend domain
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
+}
+
+export async function OPTIONS() {
+  const response = NextResponse.json({}, { status: 200 });
+  return setCorsHeaders(response);
+}
+
 export async function GET() {
   try {
     const client = await clientPromise;
@@ -17,10 +30,12 @@ export async function GET() {
       createdAt: doc.createdAt.toISOString(),
     }));
 
-    return NextResponse.json({ success: true, enquiries });
+    const response = NextResponse.json({ success: true, enquiries });
+    return setCorsHeaders(response);
   } catch (error) {
     console.error('GET /api/homeinquery error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    const response = NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return setCorsHeaders(response);
   }
 }
 
@@ -29,7 +44,8 @@ export async function POST(request: Request) {
     const { name, email, phone, country } = await request.json();
 
     if (!name || !email || !phone || !country) {
-      return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 });
+      const response = NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 });
+      return setCorsHeaders(response);
     }
 
     const client = await clientPromise;
@@ -44,10 +60,11 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     });
 
-    return NextResponse.json({ success: true, _id: result.insertedId.toString() }); // <-- no { status: 201 }
+    const response = NextResponse.json({ success: true, _id: result.insertedId.toString() });
+    return setCorsHeaders(response);
   } catch (error) {
     console.error('POST /api/homeinquery error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    const response = NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return setCorsHeaders(response);
   }
 }
-
